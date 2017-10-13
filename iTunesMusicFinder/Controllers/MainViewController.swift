@@ -9,6 +9,10 @@
 import UIKit
 import SDWebImage
 
+protocol AlbumSelectionDelegate: class {
+    func albumSelected(newAlbum: Album)
+}
+
 class MainViewController: UITableViewController {
 
     var results: [Album] = []
@@ -18,28 +22,29 @@ class MainViewController: UITableViewController {
 
     fileprivate let AlbumCellIdentifier = "albumCell"
     fileprivate let AlbumDetailsViewControllerID = "albumDetailsVC"
-    
-    var albumsFilePath: String {
-        let manager = FileManager.default
-        let url = manager.urls(for: .documentDirectory, in: .userDomainMask).first
-        return (url!.appendingPathComponent("Albums").path)
-    }
-    
-    fileprivate func saveAlbums() {
-        NSKeyedArchiver.archiveRootObject(results, toFile: albumsFilePath)
-    }
-    
-    fileprivate func loadData() {
-        if let cachedAlbums = NSKeyedUnarchiver.unarchiveObject(withFile: albumsFilePath) as? [Album] {
-            results = cachedAlbums
-        }
-    }
+    fileprivate let albumsPathName = "Albums"
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        loadData()
+    
         configureSearchController()
         configureActivityIndicator()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        Archiver.shared.unarchive(pathName: albumsPathName) { [unowned self] (albums: [Album]?) in
+            if let albums = albums {
+                self.results = albums
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                    if UIDevice.current.userInterfaceIdiom == .pad {
+                        self.selectAlbum(indexPath: IndexPath(row: 0, section: 0))
+                    }
+                }
+            }
+        }
+        searchController.searchBar.isHidden = false
     }
     
     fileprivate func configureActivityIndicator() {
@@ -121,29 +126,41 @@ class MainViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        if let albumDetailsVC = storyboard?.instantiateViewController(withIdentifier: AlbumDetailsViewControllerID) as? AlbumDetailsViewController {
-            albumDetailsVC.album = results[indexPath.row]
-            navigationController?.pushViewController(albumDetailsVC, animated: true)
+        selectAlbum(indexPath: indexPath)
+    }
+    
+    fileprivate func selectAlbum(indexPath: IndexPath) {
+        if UIDevice.current.userInterfaceIdiom == .phone {
+            searchController.searchBar.isHidden = true
         }
+        
+        let selectedAlbum = results[indexPath.row]
+        let albumVC = storyboard?.instantiateViewController(withIdentifier: AlbumDetailsViewControllerID) as! AlbumDetailsViewController
+        albumVC.album = selectedAlbum
+        let navVC = UINavigationController(rootViewController: albumVC)
+        splitViewController?.showDetailViewController(navVC, sender: nil)
     }
 }
 
 extension MainViewController: UISearchBarDelegate {
-    func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         
         startLoader()
-        
-        guard let query = searchBar.text else {
-            return
-        }
+        guard let query = searchBar.text else { return }
         
         NetworkManager.shared.find(term: query) { [unowned self] (responseResults) in
             self.results = responseResults
-            self.saveAlbums()
+            
+            DispatchQueue.global().async {
+                Archiver.shared.archive(items: self.results, pathName: self.albumsPathName)
+            }
             
             DispatchQueue.main.async {
                 self.stopLoader()
                 self.tableView.reloadData()
+                if UIDevice.current.userInterfaceIdiom == .pad {
+                    self.selectAlbum(indexPath: IndexPath(row: 0, section: 0))
+                }
             }
         }
         searchBar.resignFirstResponder()

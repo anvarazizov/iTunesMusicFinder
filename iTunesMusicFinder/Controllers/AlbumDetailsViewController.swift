@@ -21,15 +21,23 @@ class AlbumDetailsViewController: UITableViewController {
     @IBOutlet weak var releaseDateCell: UITableViewCell!
     @IBOutlet weak var copyrightCell: UITableViewCell!
     @IBOutlet weak var collectionExplicitnessCell: UITableViewCell!
-    @IBOutlet weak var contentAdvisoryRatingCell: UITableViewCell!
     
     var album: Album?
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = UIColor(red: 20.0/255.0, green: 20.0/255.0, blue: 20.0/255.0, alpha: 1.0)
+    }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationItem.leftItemsSupplementBackButton = true
+        navigationItem.leftBarButtonItem = splitViewController?.displayModeButtonItem
+        refreshUI()
+    }
+    
+    fileprivate func refreshUI() {
         title = album?.artistName ?? ""
-    
         artistNameCell.textLabel?.text = album?.artistName ?? ""
         collectionNameCell.textLabel?.text = album?.collectionName ?? ""
         primaryGenreNameCell.textLabel?.text = album?.primaryGenreName ?? ""
@@ -39,16 +47,16 @@ class AlbumDetailsViewController: UITableViewController {
         releaseDateCell.textLabel?.text = album?.releaseDate ?? ""
         copyrightCell.textLabel?.text = album?.copyright ?? ""
         collectionExplicitnessCell.textLabel?.text = album?.collectionExplicitness ?? ""
-        contentAdvisoryRatingCell.textLabel?.text = album?.contentAdvisoryRating ?? ""
+        tableView.reloadData()
     }
-
+    
     // MARK: - Table view data source
     override func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 10
+        return 9
     }
     
     override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
