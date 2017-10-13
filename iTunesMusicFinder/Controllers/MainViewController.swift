@@ -9,10 +9,6 @@
 import UIKit
 import SDWebImage
 
-protocol AlbumSelectionDelegate: class {
-    func albumSelected(newAlbum: Album)
-}
-
 class MainViewController: UITableViewController {
 
     var results: [Album] = []
@@ -26,7 +22,6 @@ class MainViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-    
         configureSearchController()
         configureActivityIndicator()
     }

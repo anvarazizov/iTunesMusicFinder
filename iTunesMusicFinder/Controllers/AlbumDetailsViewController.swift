@@ -64,7 +64,7 @@ class AlbumDetailsViewController: UITableViewController {
         let width = tableView.frame.width
         let headerView = AlbumCoverView(frame: CGRect(x: 0, y: 0, width: width, height: width))
 
-        let size = Int(headerView.imageView.frame.width)
+        let size = Int(headerView.imageView.frame.width * UIScreen.main.scale)
         if  let album = album,
             let artworkStringURL = album.artworkUrl(size),
             let artworkURL = URL(string: artworkStringURL) {

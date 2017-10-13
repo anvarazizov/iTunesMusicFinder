@@ -29,7 +29,7 @@ class Album: NSObject, NSCoding, Mappable {
     var copyright: String?
     var country: String?
     var currency: String?
-    var releaseDate: String? // "2012-01-01T08:00:00Z"
+    var releaseDate: String?
     var primaryGenreName: String?
     
     struct Keys {
